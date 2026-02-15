@@ -23,6 +23,16 @@ export default function HomePage({ data }) {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-16">
+      {/* Top-left SVG logo */}
+      <div className="fixed top-4 left-4 z-20">
+        <img src={`${import.meta.env.BASE_URL}logo-dad.svg`} alt="" className="h-20 w-auto" />
+      </div>
+
+      {/* Top-right SVG logo */}
+      <div className="fixed top-4 right-4 z-20">
+        <img src={`${import.meta.env.BASE_URL}logo-dad-2.svg`} alt="" className="h-20 w-auto" />
+      </div>
+
       {/* Animated background orbs */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="animate-pulse-glow absolute right-1/4 top-1/4 h-[400px] w-[400px] rounded-full bg-indigo-600/[0.07] blur-[120px]" />

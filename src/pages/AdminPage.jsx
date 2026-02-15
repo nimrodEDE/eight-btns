@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { resetData } from "../data/dataManager";
 import { CARD_COLORS } from "../components/ButtonCard";
 import BackButton from "../components/BackButton";
+
+const MAX_PDFS = 3;
 
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "1234";
@@ -117,6 +119,7 @@ export default function AdminPage({ data, setData }) {
       subtitle: "",
       text: "תוכן הכפתור...",
       image: "",
+      pdfs: [],
     };
     setData({ ...data, buttons: [...data.buttons, newButton] });
     setEditingId(newButton.id);
@@ -262,6 +265,10 @@ export default function AdminPage({ data, setData }) {
                       onChange={(v) => handleFieldChange(button.id, "image", v)}
                       placeholder="https://example.com/image.jpg"
                     />
+                    <PdfDropZone
+                      pdfs={button.pdfs || []}
+                      onChange={(pdfs) => handleFieldChange(button.id, "pdfs", pdfs)}
+                    />
                     <button
                       onClick={handleSaveButton}
                       className="rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-light"
@@ -285,6 +292,119 @@ export default function AdminPage({ data, setData }) {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PdfDropZone({ pdfs, onChange }) {
+  const [dragging, setDragging] = useState(false);
+  const fileInputRef = useRef(null);
+
+  function readFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve({ name: file.name, data: reader.result });
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function addFiles(files) {
+    const pdfFiles = Array.from(files).filter(f => f.type === "application/pdf");
+    if (pdfFiles.length === 0) return;
+
+    const currentPdfs = pdfs.filter(p => p && p.data);
+    const slotsLeft = MAX_PDFS - currentPdfs.length;
+    if (slotsLeft <= 0) return;
+
+    const toAdd = pdfFiles.slice(0, slotsLeft);
+    const results = await Promise.all(toAdd.map(readFile));
+    onChange([...currentPdfs, ...results]);
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    setDragging(false);
+    addFiles(e.dataTransfer.files);
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    setDragging(true);
+  }
+
+  function handleDragLeave() {
+    setDragging(false);
+  }
+
+  function handleFileInput(e) {
+    addFiles(e.target.files);
+    e.target.value = "";
+  }
+
+  function handleRemove(index) {
+    const updated = pdfs.filter((_, i) => i !== index);
+    onChange(updated);
+  }
+
+  const activePdfs = pdfs.filter(p => p && p.data);
+  const canAdd = activePdfs.length < MAX_PDFS;
+
+  return (
+    <div>
+      <label className="mb-1.5 block text-sm text-slate-400">
+        קבצי PDF (עד {MAX_PDFS})
+      </label>
+
+      {activePdfs.length > 0 && (
+        <div className="mb-3 space-y-2">
+          {activePdfs.map((pdf, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between rounded-lg border border-white/10 bg-surface-light px-4 py-2.5"
+            >
+              <span className="truncate text-sm text-white">{pdf.name}</span>
+              <button
+                type="button"
+                onClick={() => handleRemove(i)}
+                className="mr-2 text-sm text-red-400/70 transition-colors hover:text-red-400"
+              >
+                הסר
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {canAdd && (
+        <div
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onClick={() => fileInputRef.current?.click()}
+          className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors ${
+            dragging
+              ? "border-primary bg-primary/10"
+              : "border-white/10 hover:border-white/25"
+          }`}
+        >
+          <span className="mb-1 text-2xl text-slate-400">&#128196;</span>
+          <span className="text-sm text-slate-400">
+            גררו קבצי PDF לכאן או לחצו לבחירה
+          </span>
+          <span className="mt-1 text-xs text-slate-500">
+            ({activePdfs.length}/{MAX_PDFS})
+          </span>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/pdf"
+            multiple
+            onChange={handleFileInput}
+            className="hidden"
+          />
+        </div>
+      )}
     </div>
   );
 }

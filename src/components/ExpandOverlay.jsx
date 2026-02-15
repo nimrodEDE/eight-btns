@@ -183,6 +183,35 @@ export default function ExpandOverlay({ button, index, startRect, onClose }) {
                 </p>
               ))}
             </div>
+
+            {/* PDFs */}
+            {button.pdfs?.filter(p => p && p.data).length > 0 && (
+              <div
+                className="animate-slide-in mt-10 space-y-6"
+                style={{ animationDelay: button.image ? "500ms" : "450ms" }}
+              >
+                <h3 className="text-lg font-semibold text-white">קבצי PDF</h3>
+                {button.pdfs.filter(p => p && p.data).map((pdf, i) => (
+                  <div key={i} className="overflow-hidden rounded-2xl border border-white/10">
+                    <div className="flex items-center justify-between bg-white/5 px-4 py-2">
+                      <span className="text-sm text-slate-300">{pdf.name || `PDF ${i + 1}`}</span>
+                      <a
+                        href={pdf.data}
+                        download={pdf.name || `document-${i + 1}.pdf`}
+                        className="rounded-lg border border-white/10 px-3 py-1 text-xs text-slate-300 transition-colors hover:border-white/25 hover:text-white"
+                      >
+                        הורדה &#8595;
+                      </a>
+                    </div>
+                    <iframe
+                      src={pdf.data}
+                      title={pdf.name || `PDF ${i + 1}`}
+                      className="h-[500px] w-full border-0 bg-white"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
